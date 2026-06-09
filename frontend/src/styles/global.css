@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Space Grotesk", system-ui, sans-serif;
+  --color-cream: #f5f0e8;
+  --color-surface: #fffdf8;
+  --color-brutal: #1a1a1a;
+  --color-accent: #f5c518;
+  --color-accent-hover: #e0b010;
+  --color-danger: #e63946;
+  --shadow-brutal: 4px 4px 0 #1a1a1a;
+  --shadow-brutal-sm: 2px 2px 0 #1a1a1a;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    @apply h-full overflow-hidden;
+  }
+
+  body {
+    @apply bg-cream text-brutal font-sans antialiased;
+  }
+}
+
+@layer components {
+  .btn-brutal {
+    @apply border-2 border-brutal bg-surface font-semibold transition-all duration-100;
+  }
+  .btn-brutal:hover:not(:disabled) {
+    @apply -translate-x-px -translate-y-px;
+    box-shadow: var(--shadow-brutal-sm);
+  }
+  .btn-brutal:active:not(:disabled) {
+    @apply translate-x-px translate-y-px;
+    box-shadow: none;
+  }
+  .btn-brutal:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply border-2 border-brutal bg-accent px-5 py-2 font-semibold transition-all duration-100;
+    box-shadow: var(--shadow-brutal-sm);
+  }
+  .btn-primary:hover:not(:disabled) {
+    @apply -translate-x-px -translate-y-px bg-accent-hover;
+    box-shadow: var(--shadow-brutal-sm);
+  }
+  .btn-primary:active:not(:disabled) {
+    @apply translate-x-px translate-y-px;
+    box-shadow: none;
+  }
+  .btn-primary:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+  .btn-danger {
+    @apply border-2 border-brutal bg-danger px-5 py-2 font-semibold text-white transition-all duration-100;
+    box-shadow: var(--shadow-brutal-sm);
+  }
+  .btn-danger:hover:not(:disabled) {
+    @apply -translate-x-px -translate-y-px;
+    box-shadow: var(--shadow-brutal-sm);
+  }
+  .btn-ghost {
+    @apply border-2 border-transparent bg-transparent px-4 py-2 font-semibold transition-all duration-100;
+  }
+  .btn-ghost:hover:not(:disabled) {
+    @apply -translate-x-px -translate-y-px border-brutal;
+    box-shadow: var(--shadow-brutal-sm);
+  }
+  .card-brutal {
+    @apply border-2 border-brutal bg-surface;
+    box-shadow: var(--shadow-brutal);
+  }
+  .input-brutal {
+    @apply w-full border-2 border-brutal bg-surface px-3 py-2.5 text-sm outline-none;
+  }
+  .input-brutal:focus {
+    box-shadow: var(--shadow-brutal-sm);
+  }
+}
