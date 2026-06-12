@@ -1,0 +1,31 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: neostream-backend
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@neostream-db:5432/neostream-db
+      - JWT_SECRET=qwertyuiopasdfghjklzxcvbnm1234567890
+      - PORT=5000
+      - FRONTEND_URL=http://localhost:5173
+    depends_on:
+      - postgres
+    ports:
+      - "5000:5000"
+  # for local developemnt
+  postgres:
+    image: postgres:16-alpine
+    container_name: neostream-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=neostream-db
+    ports:
+      - "5432:5432"
+    volumes:
+      - neostream_pgdata:/var/lib/postgresql/data
+volumes:
+  neostream_pgdata:
+ 
