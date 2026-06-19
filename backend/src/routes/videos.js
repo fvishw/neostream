@@ -1,14 +1,16 @@
 import { Router } from 'express';
-import multer from 'multer';
 import prisma from '../utils/prisma.js';
-import { uploadToS3, deleteFromS3 } from '../utils/s3.js';
+import { buildPublicUrl, createPresignedUpload, deleteFromS3, keyFromUrl } from '../utils/s3.js';
 import { authenticate, optionalAuth } from '../middleware/auth.js';
 
 const router = Router();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 * 1024 } });
 
 const VALID_CATEGORIES = ['MUSIC', 'NEWS', 'AI', 'SOURCE_CODE', 'GAMING', 'OTHER'];
 const SHORTS_MAX_DURATION = 60;
+const UPLOAD_FOLDERS = {
+  video: 'videos',
+  thumbnail: 'thumbnails',
+};
 
 const videoSelect = {
   id: true,
@@ -29,6 +31,19 @@ function parseCategory(value) {
   if (!value) return undefined;
   const upper = value.toUpperCase().replace(/ /g, '_');
   return VALID_CATEGORIES.includes(upper) ? upper : undefined;
+}
+
+function isAllowedUploadType(kind, mimetype) {
+  if (!mimetype) return false;
+  if (kind === 'video') return mimetype.startsWith('video/');
+  if (kind === 'thumbnail') return mimetype.startsWith('image/');
+  return false;
+}
+
+function isUserUploadUrl(url, kind, userId) {
+  const folder = UPLOAD_FOLDERS[kind];
+  const key = keyFromUrl(url);
+  return !!folder && !!key && key.startsWith(`neostream/${folder}/${userId}/`) && url === buildPublicUrl(key);
 }
 
 router.get('/', optionalAuth, async (req, res) => {
@@ -159,40 +174,53 @@ router.post('/:id/view', optionalAuth, async (req, res) => {
   }
 });
 
-router.post('/', authenticate, upload.fields([
-  { name: 'video', maxCount: 1 },
-  { name: 'thumbnail', maxCount: 1 },
-]), async (req, res) => {
+router.post('/presign', authenticate, async (req, res) => {
   try {
-    const { title, description = '', visibility = 'PUBLIC', duration = '0', category = 'OTHER' } = req.body;
-    if (!title) return res.status(400).json({ error: 'Title is required' });
-    if (!req.files?.video?.[0]) return res.status(400).json({ error: 'Video file is required' });
+    const { kind = 'video', filename, contentType } = req.body;
+    const folder = UPLOAD_FOLDERS[kind];
+    if (!folder) return res.status(400).json({ error: 'Invalid upload type' });
+    if (!isAllowedUploadType(kind, contentType)) return res.status(400).json({ error: 'Invalid file type' });
 
-    const videoFile = req.files.video[0];
-    const videoResult = await uploadToS3(videoFile.buffer, {
-      folder: 'videos',
+    const upload = await createPresignedUpload({
+      folder,
       userId: req.user.id,
-      mimetype: videoFile.mimetype,
-      originalname: videoFile.originalname,
+      mimetype: contentType,
+      originalname: filename,
     });
 
-    let thumbnailUrl = null;
-    if (req.files.thumbnail?.[0]) {
-      const thumbFile = req.files.thumbnail[0];
-      const thumbResult = await uploadToS3(thumbFile.buffer, {
-        folder: 'thumbnails',
-        userId: req.user.id,
-        mimetype: thumbFile.mimetype,
-        originalname: thumbFile.originalname,
-      });
-      thumbnailUrl = thumbResult.url;
+    res.json({ upload });
+  } catch (err) {
+    console.error('Presign error:', err);
+    res.status(500).json({ error: 'Failed to create upload URL' });
+  }
+});
+
+router.post('/', authenticate, async (req, res) => {
+  try {
+    const {
+      title,
+      description = '',
+      visibility = 'PUBLIC',
+      duration = '0',
+      category = 'OTHER',
+      videoUrl,
+      thumbnailUrl = null,
+    } = req.body;
+
+    if (!title) return res.status(400).json({ error: 'Title is required' });
+    if (!videoUrl) return res.status(400).json({ error: 'Video URL is required' });
+    if (!isUserUploadUrl(videoUrl, 'video', req.user.id)) {
+      return res.status(400).json({ error: 'Invalid video URL' });
+    }
+    if (thumbnailUrl && !isUserUploadUrl(thumbnailUrl, 'thumbnail', req.user.id)) {
+      return res.status(400).json({ error: 'Invalid thumbnail URL' });
     }
 
     const video = await prisma.video.create({
       data: {
         title,
         description,
-        videoUrl: videoResult.url,
+        videoUrl,
         thumbnailUrl,
         duration: Math.round(Number(duration) || 0),
         category: parseCategory(category) || 'OTHER',
@@ -204,8 +232,8 @@ router.post('/', authenticate, upload.fields([
 
     res.status(201).json({ video });
   } catch (err) {
-    console.error('Upload error:', err);
-    res.status(500).json({ error: 'Failed to upload video' });
+    console.error('Create video error:', err);
+    res.status(500).json({ error: 'Failed to save video' });
   }
 });
 

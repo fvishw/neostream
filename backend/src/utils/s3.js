@@ -1,4 +1,5 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
 import path from 'path';
 
@@ -12,7 +13,7 @@ const s3 = new S3Client({
 
 const bucket = () => process.env.AWS_S3_BUCKET;
 
-function buildPublicUrl(key) {
+export function buildPublicUrl(key) {
   if (process.env.AWS_S3_PUBLIC_URL) {
     return `${process.env.AWS_S3_PUBLIC_URL.replace(/\/$/, '')}/${key}`;
   }
@@ -31,6 +32,11 @@ function extFromMime(mimetype, fallback = 'bin') {
   return map[mimetype] || fallback;
 }
 
+function buildObjectKey({ folder, userId, mimetype, originalname }) {
+  const ext = path.extname(originalname || '').slice(1) || extFromMime(mimetype);
+  return `neostream/${folder}/${userId}/${randomUUID()}.${ext}`;
+}
+
 export function keyFromUrl(url) {
   if (!url) return null;
   try {
@@ -45,20 +51,19 @@ export function keyFromUrl(url) {
   }
 }
 
-export async function uploadToS3(buffer, { folder, userId, mimetype, originalname }) {
-  const ext = path.extname(originalname || '').slice(1) || extFromMime(mimetype);
-  const key = `neostream/${folder}/${userId}/${randomUUID()}.${ext}`;
-
-  await s3.send(
+export async function createPresignedUpload({ folder, userId, mimetype, originalname }) {
+  const key = buildObjectKey({ folder, userId, mimetype, originalname });
+  const uploadUrl = await getSignedUrl(
+    s3,
     new PutObjectCommand({
       Bucket: bucket(),
       Key: key,
-      Body: buffer,
       ContentType: mimetype,
-    })
+    }),
+    { expiresIn: 60 * 5 }
   );
 
-  return { key, url: buildPublicUrl(key) };
+  return { key, uploadUrl, publicUrl: buildPublicUrl(key) };
 }
 
 export async function deleteFromS3(url) {

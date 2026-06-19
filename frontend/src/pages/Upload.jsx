@@ -16,6 +16,32 @@ function getVideoDuration(file) {
   });
 }
 
+async function uploadFileToS3(file, kind) {
+  if (!file.type) {
+    throw new Error(`Selected ${kind} file has an unknown content type`);
+  }
+
+  const { upload } = await api.createVideoUploadUrl({
+    kind,
+    filename: file.name,
+    contentType: file.type,
+  });
+
+  const res = await fetch(upload.uploadUrl, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': file.type,
+    },
+    body: file,
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to upload ${kind} to storage`);
+  }
+
+  return upload.publicUrl;
+}
+
 export default function Upload() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -43,16 +69,18 @@ export default function Upload() {
     setLoading(true);
     try {
       const duration = await getVideoDuration(videoFile);
-      const formData = new FormData();
-      formData.append('title', title);
-      formData.append('description', description);
-      formData.append('visibility', visibility);
-      formData.append('category', category);
-      formData.append('duration', String(duration));
-      formData.append('video', videoFile);
-      if (thumbnailFile) formData.append('thumbnail', thumbnailFile);
+      const videoUrl = await uploadFileToS3(videoFile, 'video');
+      const thumbnailUrl = thumbnailFile ? await uploadFileToS3(thumbnailFile, 'thumbnail') : null;
 
-      const { video } = await api.uploadVideo(formData);
+      const { video } = await api.uploadVideo({
+        title,
+        description,
+        visibility,
+        category,
+        duration,
+        videoUrl,
+        thumbnailUrl,
+      });
       navigate(`/watch/${video.id}`);
     } catch (err) {
       setError(err.message);

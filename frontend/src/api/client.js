@@ -36,7 +36,8 @@ export const api = {
   getMyVideos: () => request('/videos/my'),
   getVideo: (id) => request(`/videos/${id}`),
   recordView: (id) => request(`/videos/${id}/view`, { method: 'POST' }),
-  uploadVideo: (formData) => request('/videos', { method: 'POST', body: formData }),
+  createVideoUploadUrl: (body) => request('/videos/presign', { method: 'POST', body: JSON.stringify(body) }),
+  uploadVideo: (body) => request('/videos', { method: 'POST', body: JSON.stringify(body) }),
   updateVideo: (id, body) => request(`/videos/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteVideo: (id) => request(`/videos/${id}`, { method: 'DELETE' }),
 

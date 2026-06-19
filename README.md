@@ -76,6 +76,8 @@ AWS_S3_BUCKET="your-bucket"
 AWS_S3_PUBLIC_URL=""  # optional CloudFront URL
 ```
 
+For direct browser uploads, configure CORS on the S3 bucket to allow `PUT` requests from `FRONTEND_URL` with the `Content-Type` header.
+
 ## Demo Accounts (after seed)
 
 | Email | Password |
@@ -91,7 +93,8 @@ AWS_S3_PUBLIC_URL=""  # optional CloudFront URL
 | POST | `/api/auth/login` | Login |
 | GET | `/api/videos` | Public feed (`?category=AI&sort=liked`) |
 | GET | `/api/videos/shorts` | Short videos (≤60s) |
-| POST | `/api/videos` | Upload video |
+| POST | `/api/videos/presign` | Create S3 upload URL |
+| POST | `/api/videos` | Save uploaded video metadata |
 | GET | `/api/history` | Watch history |
 | GET/POST/DELETE | `/api/watch-later/:videoId` | Watch later |
 | POST/DELETE | `/api/likes/:videoId` | Like/unlike |

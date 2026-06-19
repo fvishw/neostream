@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: neostream-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=neostream-db
+    ports:
+      - "5432:5432"
+    volumes:
+      - neostream_pgdata:/var/lib/postgresql/data
+volumes:
+  neostream_pgdata:
