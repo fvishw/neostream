@@ -40,3 +40,14 @@ module "networking" {
 
   nat_gateway_subnet_key = "public-web-a"
 }
+
+module "security" {
+  source = "../../modules/security"
+
+  app_port          = 3000
+  db_port           = 5432
+  internal_alb_port = 3000
+  name_prefix       = "neostream"
+  vpc_id            = module.networking.vpc_id
+
+}

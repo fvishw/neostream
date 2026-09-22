@@ -13,21 +13,21 @@ variable "public_subnets" {
     az   = string
   }))
 }
-variable "private_subnets"{
-    description = "Private subnet for app tier subnets"
-    type = map(object({
-        cidr= string
-        az= string
-    }))
+variable "private_subnets" {
+  description = "Private subnet for app tier subnets"
+  type = map(object({
+    cidr = string
+    az   = string
+  }))
 }
 variable "db_subnets" {
-    description = "Private database-tier subents"
-    type = map(object({
-        cidr = string
-        az = string
-    }))
+  description = "Private database-tier subents"
+  type = map(object({
+    cidr = string
+    az   = string
+  }))
 }
 variable "nat_gateway_subnet_key" {
   description = "value of subnet key in nat-gateway will be created"
-  type = string
+  type        = string
 }
