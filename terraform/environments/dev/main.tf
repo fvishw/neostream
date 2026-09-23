@@ -43,11 +43,28 @@ module "networking" {
 
 module "security" {
   source = "../../modules/security"
-
+  web_port          = 80
   app_port          = 3000
   db_port           = 5432
   internal_alb_port = 3000
   name_prefix       = "neostream"
   vpc_id            = module.networking.vpc_id
 
+}
+
+
+module "alb" {
+  source = "../../modules/alb"
+
+  prefix_name = "neostream"
+  vpc_id      = module.networking.vpc_id
+
+  public_alb_sg_id   = [module.security.public_alb_sg_id]
+  internal_alb_sg_id = [module.security.internal_alb_sg_id]
+
+  public_subnet_ids   = module.networking.web_subnet_ids
+  internal_subnet_ids = module.networking.app_subnet_ids
+
+  web_port = 80
+  app_port = 3000
 }
