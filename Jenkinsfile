@@ -1,6 +1,6 @@
 pipeline{
     agent any
-    enviornment{
+    environment{
         VITE_API_URL = credentials('VITE_API_URL')
         FRONTEND_S3_BUCKET_NAME = credentials('FRONTEND_S3_BUCKET_NAME')
         BACKEND_IMG_NAME = "fvishw/neostream"
