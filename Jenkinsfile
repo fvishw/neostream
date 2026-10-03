@@ -2,7 +2,7 @@ pipeline{
     agent any
     enviornment{
         VITE_API_URL = credentials('VITE_API_URL')
-        FRONTEND_S3_BUCKET_NAME = credentials('FRONTEND_S3_BUCKET_NAME') #"neostream-fvishw"
+        FRONTEND_S3_BUCKET_NAME = credentials('FRONTEND_S3_BUCKET_NAME')
         BACKEND_IMG_NAME = "fvishw/neostream"
         BACKEND_MIGRATE_IMG_NAME = "fvishw/neostream-migrate"
         BACKEND_IMG_TAG = "${BACKEND_IMG_NAME}:${GIT_COMMIT}"
