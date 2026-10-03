@@ -25,8 +25,10 @@ pipeline{
                     steps{
                         sh "cd frontend && npm ci && npm run build"
                     }
+                }
             }
         }
+
         stage('Push Docker Images'){
             steps{
                 withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
@@ -36,26 +38,5 @@ pipeline{
                 }
             }
         }
-        // stage('Run Backend Migrations'){
-        //     steps{
-        //         withCredentials([usernamePassword(credentialsId: 'aws', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-        //             sh 'aws s3 sync frontend/dist s3://${FRONTEND_S3_BUCKET_NAME} --delete'
-        //         }
-        //     }
-        // }
-        // stage('Deploy Backend to ECS'){
-        //     steps{
-        //         withCredentials([usernamePassword(credentialsId: 'aws', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-        //             sh 'aws ecs update-service --cluster neostream-cluster --service neostream-service --force-new-deployment'
-        //         }
-        //     }
-        // }
-        // stage('Upload Frontend to S3'){
-        //     steps{
-        //         withCredentials([usernamePassword(credentialsId: 'aws', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-        //             sh 'aws s3 sync frontend/dist s3://${FRONTEND_S3_BUCKET_NAME} --delete'
-        //         }
-        //     }
-        // }
-
+    }
 }
