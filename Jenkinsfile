@@ -1,5 +1,8 @@
 pipeline{
     agent any
+    tools{
+        nodejs "node"
+    }
     environment{
         VITE_API_URL = credentials('VITE_API_URL')
         FRONTEND_S3_BUCKET_NAME = credentials('FRONTEND_S3_BUCKET_NAME')
