@@ -50,7 +50,7 @@ def updateTaskImage(String taskFamily,String newImage,String fileName){
 
                 echo "Updated task definition JSON saved to $FILE_NAME.json"
             '''
-        taskDefinitionArn = sh(
+       def  taskDefinitionArn = sh(
             script: '''
                 aws ecs register-task-definition \
                     --cli-input-json file://"$FILE_NAME".json \
@@ -80,8 +80,8 @@ pipeline{
         ECS_BACKEND_SERVICE="neostream-be-service-f5391hrx"
         AWS_PRIVATE_SUBNET_IDS='"subnet-05f05b068af39eec9","subnet-00cf1ab6e01295095"'
         AWS_PRIVATE_SG='"sg-0844fe6bc7b46356f"'
-        BACKEND_IMG_TAG = "${BACKEND_IMG_NAME}:${GIT_COMMIT}"
-        BACKEND_MIGRATE_IMG_TAG = "${BACKEND_MIGRATE_IMG_NAME}:${GIT_COMMIT}"
+        BACKEND_IMG_TAG = "${BACKEND_IMG_NAME}:${env.GIT_COMMIT}"
+        BACKEND_MIGRATE_IMG_TAG = "${BACKEND_MIGRATE_IMG_NAME}:${env.GIT_COMMIT}"
     }
     stages{
         stage('Build Docker Images and Frontend'){
@@ -116,8 +116,8 @@ pipeline{
 
         stage('Run Migration Task'){
             steps{
-                script{
-                    taskDefinitionArn = updateTaskImage(ECS_MIGRATE_DEFINATION4,BACKEND_MIGRATE_IMG_TAG,"migration-task")
+                  script{
+                     def taskDefinitionArn = updateTaskImage(env.ECS_MIGRATE_DEFINATION,env.BACKEND_MIGRATE_IMG_TAG,"migration-task")
                     
                     def taskArn = sh(
                         script: """
@@ -133,17 +133,21 @@ pipeline{
                         returnStdout: true
                     ).trim()
 
+
                     echo "Task started! ARN: ${taskArn}"
                     echo "Waiting for migration task to finish execution..."
-                    waitForTaskCompletion(taskArn)
-                }
+                
+                waitForTaskCompletion(taskArn)
+                  }
             }
         }
 
         stage('Update Backend Task Defination & Service'){
             steps{
+
                 script{
-                    taskDefinitionArn = updateTaskImage(ECS_BACKEND_DEFINATION,BACKEND_IMG_TAG,"backend-task")
+                    
+                        def taskDefinitionArn = updateTaskImage(env.ECS_BACKEND_DEFINATION,env.BACKEND_IMG_TAG,"backend-task")
                 
                     sh """
                         aws ecs update-service \
@@ -160,7 +164,8 @@ pipeline{
                             --cluster "$ECS_CLUSTER" \
                             --services "$ECS_BACKEND_SERVICE"
                     """
-                }
+
+                    }
 
             }
         }
