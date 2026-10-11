@@ -115,48 +115,52 @@ pipeline{
         }
 
         stage('Run Migration Task'){
-            script{
-                taskDefinitionArn = updateTaskImage(ECS_MIGRATE_DEFINATION4,BACKEND_MIGRATE_IMG_TAG,"migration-task")
-                
-                def taskArn = sh(
-                    script: """
-                        aws ecs run-task \
-                        --cluster "$ECS_CLUSTER" \
-                        --task-definition "$taskDefinitionArn" \
-                        --cli-input-json file://migration-task.json \
-                        --launch-type FARGATE \
-                        --network-configuration "awsvpcConfiguration={subnets=[$AWS_PRIVATE_SUBNET_IDS],securityGroups=[$AWS_PRIVATE_SG],assignPublicIp=DISABLED}" \
-                        --query "tasks[0].taskArn" \
-                        --output text
-                    """.stripIndent(), 
-                    returnStdout: true
-                ).trim()
+            steps{
+                script{
+                    taskDefinitionArn = updateTaskImage(ECS_MIGRATE_DEFINATION4,BACKEND_MIGRATE_IMG_TAG,"migration-task")
+                    
+                    def taskArn = sh(
+                        script: """
+                            aws ecs run-task \
+                            --cluster "$ECS_CLUSTER" \
+                            --task-definition "$taskDefinitionArn" \
+                            --cli-input-json file://migration-task.json \
+                            --launch-type FARGATE \
+                            --network-configuration "awsvpcConfiguration={subnets=[$AWS_PRIVATE_SUBNET_IDS],securityGroups=[$AWS_PRIVATE_SG],assignPublicIp=DISABLED}" \
+                            --query "tasks[0].taskArn" \
+                            --output text
+                        """.stripIndent(), 
+                        returnStdout: true
+                    ).trim()
 
-                echo "Task started! ARN: ${taskArn}"
-                echo "Waiting for migration task to finish execution..."
-                waitForTaskCompletion(taskArn)
+                    echo "Task started! ARN: ${taskArn}"
+                    echo "Waiting for migration task to finish execution..."
+                    waitForTaskCompletion(taskArn)
+                }
             }
         }
 
         stage('Update Backend Task Defination & Service'){
             steps{
-                taskDefinitionArn = updateTaskImage(ECS_BACKEND_DEFINATION,BACKEND_IMG_TAG,"backend-task")
+                script{
+                    taskDefinitionArn = updateTaskImage(ECS_BACKEND_DEFINATION,BACKEND_IMG_TAG,"backend-task")
                 
-                sh """
-                    aws ecs update-service \
-                        --cluster "$ECS_CLUSTER" \
-                        --service "$ECS_BACKEND_SERVICE" \
-                        --task-definition "$taskDefinitionArn" \
-                        --cli-input-json file://backend-task.json                        
-                """
-                
-                echo "Backend service updated successfully!"
+                    sh """
+                        aws ecs update-service \
+                            --cluster "$ECS_CLUSTER" \
+                            --service "$ECS_BACKEND_SERVICE" \
+                            --task-definition "$taskDefinitionArn" \
+                            --cli-input-json file://backend-task.json                        
+                    """
+                    
+                    echo "Backend service updated successfully!"
 
-                sh """
-                    aws ecs wait services-stable \
-                        --cluster "$ECS_CLUSTER" \
-                        --services "$ECS_BACKEND_SERVICE"
-                """
+                    sh """
+                        aws ecs wait services-stable \
+                            --cluster "$ECS_CLUSTER" \
+                            --services "$ECS_BACKEND_SERVICE"
+                    """
+                }
 
             }
         }
