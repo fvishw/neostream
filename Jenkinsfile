@@ -124,7 +124,6 @@ pipeline{
                             aws ecs run-task \
                             --cluster "$ECS_CLUSTER" \
                             --task-definition "$taskDefinitionArn" \
-                            --cli-input-json file://migration-task.json \
                             --launch-type FARGATE \
                             --network-configuration "awsvpcConfiguration={subnets=[$AWS_PRIVATE_SUBNET_IDS],securityGroups=[$AWS_PRIVATE_SG],assignPublicIp=DISABLED}" \
                             --query "tasks[0].taskArn" \
@@ -152,8 +151,7 @@ pipeline{
                         aws ecs update-service \
                             --cluster "$ECS_CLUSTER" \
                             --service "$ECS_BACKEND_SERVICE" \
-                            --task-definition "$taskDefinitionArn" \
-                            --cli-input-json file://backend-task.json                        
+                            --task-definition "$taskDefinitionArn"                        
                     """
                     
                     echo "Backend service updated successfully!"
