@@ -77,7 +77,7 @@ pipeline{
         ECS_CLUSTER="neostream-cluster"
         ECS_BACKEND_DEFINATION="neostream-be"
         ECS_MIGRATE_DEFINATION="neostream-migrate"
-        ECS_BACKEND_SERVICE="neostream-be-service-f5391hrx"
+        ECS_BACKEND_SERVICE="neostream-be-service-i2h03xf3"
         AWS_PRIVATE_SUBNET_IDS='"subnet-05f05b068af39eec9","subnet-00cf1ab6e01295095"'
         AWS_PRIVATE_SG='"sg-0844fe6bc7b46356f"'
         BACKEND_IMG_TAG = "${BACKEND_IMG_NAME}:${env.GIT_COMMIT}"
